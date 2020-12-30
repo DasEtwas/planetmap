@@ -829,18 +829,28 @@ impl<N: RealField> ContactPreprocessor<N> for TriangleContactPreprocessor<'_, N>
         kinematic: &mut ContactKinematic<N>,
         is_first: bool,
     ) -> bool {
+        let approximate_radius_direction = self.coords.center(self.planet.terrain.face_resolution());
+
+        let normal_to_radius = contact.normal.dot(&approximate_radius_direction);
+
         if is_first {
             kinematic.set_feature1(self.planet.feature_id(
                 &self.coords,
                 self.triangle,
                 kinematic.feature1(),
             ));
+            if normal_to_radius < N::zero() {
+                contact.normal = -contact.normal;
+            }
         } else {
             kinematic.set_feature2(self.planet.feature_id(
                 &self.coords,
                 self.triangle,
                 kinematic.feature2(),
             ));
+            if normal_to_radius > N::zero() {
+                contact.normal = -contact.normal;
+            }
         }
 
         if let Some(x) = self.outer {
